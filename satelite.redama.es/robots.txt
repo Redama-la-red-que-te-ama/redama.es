@@ -1,0 +1,2 @@
+User-agent: *
+Sitemap: https://satelite.redama.es/sitemap.xml

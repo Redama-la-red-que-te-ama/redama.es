@@ -1,0 +1,2 @@
+User-agent: *
+Sitemap: https://wifi.redama.es/sitemap.xml

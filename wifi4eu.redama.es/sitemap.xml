@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="https://www.sitemaps.org/schemas/sitemap/0.9">
+   <url>
+      <loc>https://wifi4eu.redama.es/</loc>
+      <lastmod>2021-08-11</lastmod>
+      <changefreq>daily</changefreq>
+      <priority>0.9</priority>
+   </url>
+   <url>
+      <loc>https://wifi4eu.redama.es/municipios/nodo_corriente_alterna.htm</loc>
+      <lastmod>2021-08-11</lastmod>
+      <changefreq>daily</changefreq>
+      <priority>0.9</priority>
+   </url>
+   <url>
+      <loc>https://wifi4eu.redama.es/municipios/nodo_corriente_continua.htm</loc>
+      <lastmod>2021-08-11</lastmod>
+      <changefreq>daily</changefreq>
+      <priority>0.9</priority>
+   </url>
+      <url>
+      <loc>https://wifi4eu.redama.es/municipios/nodo_mesh_corriente_solar.htm</loc>
+      <lastmod>2021-08-11</lastmod>
+      <changefreq>daily</changefreq>
+      <priority>0.9</priority>
+   </url>
+</urlset> 

@@ -1,0 +1,469 @@
+@font-face {
+    font-family: 'Ubuntu';
+    font-style: normal;
+    font-weight: 400;
+    src: local('Ubuntu'), url(/webfonts/ubuntu-v15-latin-regular.woff) format('woff');
+}
+body {
+	margin:0;
+	padding:0;
+	border:0;			/* This removes the border around the viewport in old versions of IE */
+	width:100%;
+	background:#fff;
+  min-width: 320px;		/* Minimum width of layout - remove line if not required */
+					/* The min-width property does not work in old versions of Internet Explorer */
+  max-width: 1280px;
+	font-size:90%;
+	font-family: Ubuntu;
+	color: #2f2b2a;
+	line-height: 1.3em;
+	-webkit-font-smoothing: antialiased;
+        letter-spacing: -.0027777778rem;
+}
+
+article {
+	line-height: 1.75;
+}
+
+table.spec{
+  
+    border-collapse: collapse;
+    box-sizing: border-box; 
+    text-indent: initial;
+    border-spacing: 2px;
+    margin-top: 0.6em;
+    margin-bottom: 0.6em;
+    border: 2px solid #98b0ca;
+    border-left: 6px solid #98b0ca;
+    overflow-x: auto;
+    width: 91%;
+}
+thead th {
+	text-align: center;
+}
+
+tbody {
+	border: inherit;
+}
+tr {
+	background-color: #eee;
+	border: 2px solid #98b0ca;
+}
+
+th, td {
+	 font-size: inherit;
+	padding: 0.31em;
+ 	text-align: left;
+	border: 2px solid #98b0ca;
+}
+tbody td {
+	font-size: 91%;
+}
+a {
+	color:#369;
+}
+a:hover {
+	color:#fff;
+	background:#98b0ca;
+	text-decoration:none;
+}
+/*
+h1, h2, h3 {
+	margin:.8em 0 .2em 0;
+	padding:0;
+}
+*/
+p {
+	margin:.4em 0 .8em 0;
+	padding:0;
+}
+
+img {
+	margin:10px 0 5px;
+}
+h2 {
+	margin 1em;
+}
+#ads img {
+	display:block;
+	padding-top:10px;
+}
+
+/* Header styles */
+#header {
+	clear:both;
+	float:left;
+	width:100%;
+}
+#header {
+	border-bottom:1px solid #000;
+}
+#header p,
+#header h2 {
+	padding:.4em 15px 0 15px;
+	margin:0;
+}
+#header h1 {
+    padding:.2em 15px 0 15px;
+    margin-bottom: 0.3em;
+} 
+#header ul {
+	clear:left;
+	float:left;
+	width:100%;
+	list-style:none;
+	margin:10px 0 0 0;
+	padding:0;
+}
+#header ul li {
+	display:inline;
+	list-style:none;
+	margin:0;
+	padding:0;
+}
+#header ul li a {
+	display:block;
+	float:left;
+	margin:0 0 0 1px;
+	padding:3px 10px;
+	text-align:center;
+	background:#eee;
+	color:#000;
+	text-decoration:none;
+	position:relative;
+	left:15px;
+	line-height:1.3em;
+}
+#header ul li a:hover {
+	background:#98b0ca;
+	color:#fff;
+}
+#header ul li a#rojo:hover {
+	background:#dd665f;
+	color:#fff;
+}
+
+#header ul li a#amarillo:hover {
+	background:#e2bd47;
+	color:#fff;
+}
+#header ul li a.active,
+#header ul li a.active:hover {
+	color:#fff;
+	background:#98b0ca;
+	font-weight:bold;
+}
+#header ul li a#rojo.active,
+#header ul li a#rojo.active:hover {
+	color:#fff;
+	background:#dd665f;
+	font-weight:bold;
+}
+#header ul li a#amarillo.active,
+#header ul li a#amarillo.active:hover {
+	color:#fff;
+	background:#e2bd47;
+	font-weight:bold;
+}
+
+#header ul li a span {
+	display:block;
+}
+/* 'widths' sub menu */
+#layoutdims {
+	clear:both;
+	background:#98b0ca;
+	border-top:4px solid #000;
+	margin:0;
+	padding:6px 15px !important;
+	text-align:left;
+	font-style: italic;
+}
+/* column container */
+.colmask {
+	position:relative;	/* This fixes the IE7 overflow hidden bug */
+	clear:both;
+	float:left;
+	width:100%;			/* width of whole page */
+	overflow:hidden;		/* This chops off any overhanging divs */
+}
+/* common column settings */
+.colright,
+.colmid,
+.colleft {
+	float:left;
+	width:100%;			/* width of page */
+	position:relative;
+}
+.col1,
+.col2,
+.col3 {
+	float:left;
+	position:relative;
+	padding:0 0 1em 0;	/* no left and right padding on columns, we just make them narrower instead 
+					only padding top and bottom is included here, make it whatever value you need */
+	overflow:hidden;
+}
+.col1 {
+  font-size: 111%;
+}
+col2 {
+  font-size: 105%;
+}
+col2 > p {
+  line-height: 121%;
+}
+.col1 > ul > li {
+  margin: 0.5em;  
+}
+.col1 > p {
+  line-height: 131%;
+  margin: 0.5em;
+  max-width: 90%;
+}
+/* 3 Column settings */
+.threecol {
+	background:#eee;		/* right column background colour */
+}
+.threecol .colmid {
+	right:5%;			/* width of the right column */
+	background:#fff;		/* center column background colour */
+}
+.threecol .colleft {
+	right:90%;			/* width of the middle column */
+	background:#f4f4f4;	/* left column background colour */
+}
+.threecol .col1 {
+	width:76%;			/* width of center column content (column width minus padding on either side) */
+	left:102%;			/* 100% plus left padding of center column */
+}
+.threecol .col2 {
+	width:6%;			/* Width of left column content (column width minus padding on either side) */
+	left:31%;			/* width of (right column) plus (center column left and right padding) plus (left column left padding) */
+}
+.threecol .col3 {
+	width:6%;			/* Width of right column content (column width minus padding on either side) */
+	left:85%;			/* Please make note of the brackets here:
+					(100% - left column width) plus (center column left and right padding) plus (left column left and right padding) plus (right column left padding) */
+}
+/* Footer styles */
+#footer {
+	clear:both;
+	float:left;
+	width:95%;
+	border-top:1px solid #000;
+	background:#98b0ca;
+  padding-left: 5%;
+  
+}
+#footer p {
+	padding:10px;
+	margin:0;
+	
+}
+span.red {
+	color:#c60b1e;
+}
+span.ama {
+	color:#ffc400;
+}
+span.bismark {
+  color: #98b0ca;
+}
+
+span.nou {
+  color: #c60b1e;
+  font-size: 131%;
+}
+span.seis {
+  color: #ffc400;
+  font-size: 131%;
+}
+h1 em,
+h2 em {
+	color:#98b0ca;
+}
+
+img.border {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 5px;
+  box-shadow: 0 0 2px 1px rgba(0, 140, 186, 0.5);
+}
+a img {
+	text-decoration:none;
+}
+
+
+#navBar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  opacity: 1;
+}
+
+#navBar a {
+  font-weight: 600;
+  opacity: 0.8;
+  display: block;
+  color: #34495e;
+  padding: 0.3em;
+}
+
+#navBar ul {
+  width: 100%;
+  margin: 0 0 0 1em;
+  padding: 0;
+  padding-bottom: 4.5em;
+  list-style: none outside none;
+  display: inline;
+  display: flex;
+}
+
+#navBar > ul > li > a {
+  color: #d43900;
+}
+
+#navBar > ul > li:last-child {
+  border-bottom: 0;
+}
+#navBar {
+  font-size: inherit;
+  min-width: inherit;
+}
+
+#navBar ul li {
+  display: block;
+}
+
+#navBar ul li a {
+  padding-left: 10px;
+}
+
+#navBar ul li ul {
+  font-size: inherit;
+  position: relative;
+  left: 0%;
+  display: initial;
+}
+
+#navBar ul li ul li a {
+  padding-left: 30px;
+  border-left: none;
+  border-right: none;
+}
+
+#navBar ul li a:hover {
+  background-color: #d43900;
+  color: #fff;
+  text-decoration: none;
+}
+
+/* hamburger menu wizardry */
+#navBar ul {
+  display: inline-block;
+  margin: 0 !important;
+}
+
+label.menuicon {
+  z-index: 9;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  padding: 10px;
+  box-sizing: border-box;
+  background-color: hsla(0,0%,100%,.8);
+  cursor: pointer;
+}
+
+label.menuicon:hover {
+  opacity: 0.4;
+}
+
+.menuicon span {
+  display: block;
+  width: 16px;
+  height: 2px;
+  margin-bottom: 4px;
+  background-color: #d43900;
+}
+
+.donationLinks {
+  list-style-type: none;
+  padding-left: 1.5em;
+}
+
+.donationLinks img {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.twoThirds {
+  max-width: 1000px;
+}
+
+#projectLogo {
+  padding-top: 1em;
+  padding-bottom: 1em;
+}
+
+#hamburger {
+  display: none;
+}
+
+#navBar {
+  width: 250px;
+}
+
+#hamburger:checked ~ #navBar {
+  transform: TranslateX(-250px);
+}
+
+label.menuicon {
+  width: 250px;
+}
+
+#hamburger:checked ~ label.menuicon {
+  width: initial;
+}
+
+#content {
+  left: 250px;
+  transition: left .25s ease-out;
+}
+
+#hamburger:checked ~ #content {
+  left: 0;
+}
+
+/* mobile overrides, reverse notion of hamburger icon */
+@media only screen and (max-width: 800px) {
+	#navBar {
+	  position: fixed;
+	  left: -250px;
+	  overflow-y: auto;
+	}
+
+	#hamburger:checked ~ #navBar {
+	  transform: TranslateX(250px);
+	}
+
+	label.menuicon {
+	  width: initial;
+	}
+
+	#hamburger:checked ~ label.menuicon {
+	  width: 250px;
+	}
+
+	#content {
+	  left: 0;
+	  transition: left .25s ease;
+	}
+
+	#hamburger:checked ~ #content {
+	  left: 250px;
+	}
+}
+/* end mobile */

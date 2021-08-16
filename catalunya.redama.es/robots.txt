@@ -1,0 +1,2 @@
+User-agent: *
+Sitemap: https://catalunya.redama.es/sitemap.xml
