@@ -6,10 +6,6 @@ HOMEWRK="`pwd`/../"
 REPO=$(basename `pwd`)
 RELEASE="/$REPO$DATE.tar"
 
-echo "creating tar release \n"
-rm -rf "$HOMEWRK$RELEASE"
-tar --exclude="$HOMEWRK$REPO/.git/*" -cvf "$HOMEWRK$RELEASE" "$HOMEWRK$REPO"
-
 echo "git add, commit, sign and push \n"
 cd "$HOMEWRK$REPO"
 echo "check branch \n"
