@@ -1,4 +1,4 @@
-#!/usr/bin/ksh
+#!/usr/bin/bash
 
 #Comunidad autonoma de Catalunya
 
