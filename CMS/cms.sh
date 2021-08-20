@@ -10,9 +10,9 @@ userna=$(id -nu $uid)
 groupna=$(getent group "${userna}" | cut -d : -f1)
 
 
-function sanitizer {
+sanitizer () {
 	for filename in "${1}/*"; do
-		[[ $(echo "${filename}" | grep -c "\(1\)") ]] && rm -rf "${filename}"
+		[[ $(echo "${filename}") | grep -c "\(1\)" ]] && rm -rf "${filename}"
 	done
 	for filename in "${1}/*"; do
 		newfilename=$(echo "${filename}" | sed 's|"||g' | sed "s|'|e_|g" | sed 's| ||g' | sed 's|Escut|Escudo|g' | sed 's|COA_of_|Escudo_de_|g' \
@@ -33,4 +33,4 @@ sed -i "s|/PROVINCIA/|${provincia}|g"  "${basepath}/Provincias/${provincia}/arti
 sed -i "s|/PROVINCIA/|${provincia}|g"  "${basepath}/Provincias/${provincia}/footer.html"
 sed -i "s|/FECHA/|${fecha}|g"  "${basepath}/Provincias/${provincia}/footer.html"
 
-sanitizer "Img"
+sanitizer $(pwd)"/Img"
