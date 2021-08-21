@@ -58,4 +58,7 @@ read -p "Quieres aplicar filigrana a todas las imagenes? 1/0 " ctrl
 	mark && \
 	cd "Watermarked/" && \
 	for file in *; do  name=$(echo $file | cut -d . -f1); mv ${file} ${name}".jpg"; done
-
+cd $baseprog
+ls -1 Watermarked/ \
+	| xargs -I {} \
+		echo {} | sed -e "s|Escudo_de_||" -e "s|_| |g"
