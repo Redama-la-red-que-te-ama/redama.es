@@ -2,6 +2,7 @@
 
 #Comunidad autonoma de Catalunya
 
+baseprog=$(dirname $0)
 wikiprovincias="$(mktemp)"".html"
 fecha=$(date +"%d/%m/%Y")
 basepath=$(pwd)"/../catalunya.redama.es"
@@ -50,7 +51,11 @@ read -p "Quieres sanear la carpeta de los escudos de municipios? 1/0 " ctrl
 [[ $ctrl ]] && \
 	cd "Img/" && \
 	sanitizer
+cd $baseprog
 read -p "Quieres aplicar filigrana a todas las imagenes? 1/0 " ctrl
 [[ $ctrl ]] && \
-	mark
+	cd "Img/" && \
+	mark && \
+	cd "Watermarked/" && \
+	for file in *; do  name=$(echo $file | cut -d . -f1); mv ${file} ${name}".jpg"; done
 
