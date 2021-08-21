@@ -28,13 +28,10 @@ sanitizer () {
 }
 
 mark () {
-	for filename in "Sanitized/*"; do
-		$COMPOSITE -compose multiply -gravity SouthWest watermark/watermark.jpg "${filename}" "Watermarked/"$(basename "${filename}" | cut -d . -f1)".jpg"
-	done
-	for filename in "Watermarked/*"; do
-		$COMPOSITE -compose multiply -gravity SouthEast watermark/watermark2.jpg "${filename}" "/tmp"/"$(basename "${filename}")"
-		mv "/tmp"/"$(basename "${filename}")" "${filename}"
-	done
+	ls -1 Sanitized/* | awk -F\/ '{print "composite -compose multiply -gravity SouthWest watermark/watermark.jpg Sanitized/"$(NF)" Watermarked/"$(NF)".jpg"}' | sh
+	ls -1 Watermarked/* | awk -F\/ '{print "composite -compose multiply -gravity SouthEast watermark/watermark2.jpg Watermarked/"$(NF)" /tmp/"$(NF)" && mv /tmp/"$(NF)" Watermarked/"}' | sh
+	ls -1 Watermarked/* | awk -F\/ '{print "convert -resize 400 Watermarked/"$(NF)" /tmp/"$(NF)" && mv /tmp/"$(NF)" Watermarked/"}' | sh
+
 }
 
 read -p "Escribe la provincia de añadir a tu web, la primera letra MAIUSC " provincia
