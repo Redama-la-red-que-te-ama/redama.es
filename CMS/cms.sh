@@ -4,6 +4,10 @@
 
 baseprog=$(dirname $0)
 wikiprovincias="$(mktemp)"".html"
+wikicomarcas="$(mktemp)"".html"
+wikimunicipios="$(mktemp)"".html"
+wikipedia=""
+tmphtml="$(mktemp)"".html"
 fecha=$(date +"%d/%m/%Y")
 basepath=$(pwd)"/../catalunya.redama.es"
 uid=$(id -u)
@@ -35,22 +39,37 @@ mark () {
 
 }
 
+varsanitizer () {
+	name=$(echo "${1}" | sed -e 's|[àÀ]|a|g' -e 's|[èÈ]|e|g' -e 's|[ìÌ]|i|g' -e 's|[òÒ]|o|g' -e 's|[ùÙ]|u|g' -e 's|[áÁ]|a|g' -e 's|[éÉ]|e|g' -e 's|[íÍ]|i|g' -e 's|[óÓ]|o|g' -e 's|[úÚ]|u|g' -e 's|[çÇ]|c|g' -e 's| |_|g')
+	echo "${name}"
+}
+
 read -p "Quieres añadir páginas sobre las provincias catalanas? 1/0 " ctrl
 [ $ctrl = 1 ] && \
 	read -p "Escribe la provincia de añadir a tu web, la primera letra MAIUSC " provincia && \
+	provincia_limpia=$(varsanitizer "${provincia}") && \
 	wget -O "${wikiprovincias}" https://es.wikipedia.org/wiki/Anexo:Provincias_y_ciudades_aut%C3%B3nomas_de_Espa%C3%B1a && \
 	gawk -i inplace '/wikitable/,/\/table/' "${wikiprovincias}" && \
-	if [ ! -d "${basepath}/Provincias/${provincia}" ]; then
-		mkdir "${basepath}/Provincias/${provincia}"
+	if [ ! -d "${basepath}/Provincias/${provincia_limpia}" ]; then
+		mkdir "${basepath}/Provincias/${provincia_limpia}"
 	fi && \
-	install -o "${userna}" -g "${groupna}" -m 0640 Provincias/header.html  "${basepath}/Provincias/${provincia}/header.html" && \
-	install -o "${userna}" -g "${groupna}" -m 0640 Provincias/article.html  "${basepath}/Provincias/${provincia}/article.html" && \
-	install -o "${userna}" -g "${groupna}" -m 0640 Provincias/footer.html  "${basepath}/Provincias/${provincia}/footer.html" && \
-	sed -i "s|/PROVINCIA/|${provincia}|g"  "${basepath}/Provincias/${provincia}/header.html" && \
-	sed -i "s|/PROVINCIA/|${provincia}|g"  "${basepath}/Provincias/${provincia}/article.html" && \
-	sed -i "s|/PROVINCIA/|${provincia}|g"  "${basepath}/Provincias/${provincia}/footer.html" && \
-	sed -i "s|/FECHA/|${fecha}|g"  "${basepath}/Provincias/${provincia}/footer.html"
-
+	install -o "${userna}" -g "${groupna}" -m 0640 Provincias/header.html  "${basepath}/Provincias/${provincia_limpia}/header.html" && \
+	install -o "${userna}" -g "${groupna}" -m 0640 Provincias/article.html  "${basepath}/Provincias/${provincia_limpia}/article.html" && \
+	install -o "${userna}" -g "${groupna}" -m 0640 Provincias/footer.html  "${basepath}/Provincias/${provincia_limpia}/footer.html" && \
+	sed -i "s|/PROVINCIA/|${provincia}|g"  "${basepath}/Provincias/${provincia_limpia}/header.html" && \
+	sed -i "s|/PROVINCIA/|${provincia}|g"  "${basepath}/Provincias/${provincia_limpia}/article.html" && \
+	sed -i "s|/PROVINCIA/|${provincia}|g"  "${basepath}/Provincias/${provincia_limpia}/footer.html" && \
+	sed -i "s|/FECHA/|${fecha}|g"  "${basepath}/Provincias/${provincia_limpia}/footer.html" && \
+	sed -i "s|/ESCUDOPROVINCIA/|Escudo_de_la_provincia_de_${provincia_limpia}.jpg|" "${basepath}/Provincias/${provincia_limpia}/article.html" && \
+	uri="https://es.wikipedia.org""$(cat "${wikiprovincias}" | grep "${provincia}" | grep title | head -n 1 |  grep -o '".*"' | cut -d ' ' -f1 | sed 's|"||g')" && \
+	wget -O "${wikicomarcas}" "${uri}" && \
+	cat "${wikicomarcas}" | awk "/<b>${provincia}/,/<\/p>/" > "${tmphtml}" && \
+	wikipedia=$(lynx --dump "${tmphtml}" |  awk -v RS= 'NR==1'| sed -e 's|\]|\] |g' |  sed "s|\[[0-9]\]||g" |  sed "s|\[[0-9][0-9]\]||g" | sed "s|\^||g" | sed "s|&*&||g") && \
+	awk '1;/\/WIKIPEDIA\//{exit}' "${basepath}/Provincias/${provincia_limpia}/article.html" | awk 'NR>2 {print last} {last=$0}' > "${tmphtml}" && \
+	echo "${wikipedia}" >> "${tmphtml}" && \
+	sed -n '/\/WIKIPEDIA\//,$p' "${basepath}/Provincias/${provincia_limpia}/article.html" | sed '1d' >> "${tmphtml}" && \
+	cat "${tmphtml}" > "${basepath}/Provincias/${provincia_limpia}/article.html" 
+	
 read -p "Quieres sanear la carpeta de los escudos de municipios? 1/0 " ctrl
 [ $ctrl = 1 ] && \
 	cd "Img/" && \
