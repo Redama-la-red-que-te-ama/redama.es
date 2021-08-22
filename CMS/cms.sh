@@ -35,30 +35,32 @@ mark () {
 
 }
 
-read -p "Escribe la provincia de añadir a tu web, la primera letra MAIUSC " provincia
-wget -O "${wikiprovincias}" https://es.wikipedia.org/wiki/Anexo:Provincias_y_ciudades_aut%C3%B3nomas_de_Espa%C3%B1a
-gawk -i inplace '/wikitable/,/\/table/' "${wikiprovincias}"
-install -o "${userna}" -g "${groupna}" -m 0640 header.html  "${basepath}/Provincias/${provincia}/header.html"
-install -o "${userna}" -g "${groupna}" -m 0640 article.html  "${basepath}/Provincias/${provincia}/article.html"
-install -o "${userna}" -g "${groupna}" -m 0640 article.html  "${basepath}/Provincias/${provincia}/footer.html"
-sed -i "s|/PROVINCIA/|${provincia}|g"  "${basepath}/Provincias/${provincia}/header.html"
-sed -i "s|/PROVINCIA/|${provincia}|g"  "${basepath}/Provincias/${provincia}/article.html"
-sed -i "s|/PROVINCIA/|${provincia}|g"  "${basepath}/Provincias/${provincia}/footer.html"
-sed -i "s|/FECHA/|${fecha}|g"  "${basepath}/Provincias/${provincia}/footer.html"
-
+read -p "Quieres añadir páginas sobre las provincias catalanas? 1/0 " ctrl
+[ $ctrl = 1 ] && \
+	read -p "Escribe la provincia de añadir a tu web, la primera letra MAIUSC " provincia && \
+	wget -O "${wikiprovincias}" https://es.wikipedia.org/wiki/Anexo:Provincias_y_ciudades_aut%C3%B3nomas_de_Espa%C3%B1a && \
+	gawk -i inplace '/wikitable/,/\/table/' "${wikiprovincias}" && \
+	if [ ! -d "${basepath}/Provincias/${provincia}" ]; then
+		mkdir "${basepath}/Provincias/${provincia}"
+	fi && \
+	install -o "${userna}" -g "${groupna}" -m 0640 Provincias/header.html  "${basepath}/Provincias/${provincia}/header.html" && \
+	install -o "${userna}" -g "${groupna}" -m 0640 Provincias/article.html  "${basepath}/Provincias/${provincia}/article.html" && \
+	install -o "${userna}" -g "${groupna}" -m 0640 Provincias/footer.html  "${basepath}/Provincias/${provincia}/footer.html" && \
+	sed -i "s|/PROVINCIA/|${provincia}|g"  "${basepath}/Provincias/${provincia}/header.html" && \
+	sed -i "s|/PROVINCIA/|${provincia}|g"  "${basepath}/Provincias/${provincia}/article.html" && \
+	sed -i "s|/PROVINCIA/|${provincia}|g"  "${basepath}/Provincias/${provincia}/footer.html" && \
+	sed -i "s|/FECHA/|${fecha}|g"  "${basepath}/Provincias/${provincia}/footer.html"
 
 read -p "Quieres sanear la carpeta de los escudos de municipios? 1/0 " ctrl
-[[ $ctrl ]] && \
+[ $ctrl = 1 ] && \
 	cd "Img/" && \
 	sanitizer
 cd $baseprog
 read -p "Quieres aplicar filigrana a todas las imagenes? 1/0 " ctrl
-[[ $ctrl ]] && \
+[ $ctrl = 1 ] && \
 	cd "Img/" && \
 	mark && \
 	cd "Watermarked/" && \
 	for file in *; do  name=$(echo $file | cut -d . -f1); mv ${file} ${name}".jpg"; done
 cd $baseprog
-ls -1 Watermarked/ \
-	| xargs -I {} \
-		echo {} | sed -e "s|Escudo_de_||" -e "s|_| |g"
+
