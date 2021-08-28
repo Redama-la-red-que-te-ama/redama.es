@@ -13,6 +13,7 @@ basepath=$(pwd)"/../catalunya.redama.es"
 uid=$(id -u)
 userna=$(id -nu $uid)
 groupna=$(getent group "${userna}" | cut -d : -f1)
+tmpcomarcas=$(mktemp)
 
 COMPOSITE=/usr/bin/composite
 CONVERT=/usr/bin/convert
@@ -68,7 +69,8 @@ read -p "Quieres añadir páginas sobre las provincias catalanas? 1/0 " ctrl
 	awk '1;/\/WIKIPEDIA\//{exit}' "${basepath}/Provincias/${provincia_limpia}/article.html" | awk 'NR>2 {print last} {last=$0}' > "${tmphtml}" && \
 	echo "${wikipedia}" >> "${tmphtml}" && \
 	sed -n '/\/WIKIPEDIA\//,$p' "${basepath}/Provincias/${provincia_limpia}/article.html" | sed '1d' >> "${tmphtml}" && \
-	cat "${tmphtml}" > "${basepath}/Provincias/${provincia_limpia}/article.html" 
+	cat "${tmphtml}" > "${basepath}/Provincias/${provincia_limpia}/article.html" && \
+	lynx --dump "${tmphtml}" | awk '/Comarcas\[/{t=1}; t==1{print; if (/Eco/ || /Demo/ || /Part/){c++}}; c==1{exit}' | sed -e '1d' -e '$d' | sed -e '1d' -e '$d' | cut -d ] -f2 > "${tmpcomarcas}"
 	
 read -p "Quieres sanear la carpeta de los escudos de municipios? 1/0 " ctrl
 [ $ctrl = 1 ] && \
