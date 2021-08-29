@@ -72,22 +72,35 @@ read -p "Quieres añadir páginas sobre las provincias catalanas? 1/0 " ctrl
 	sed -n '/\/WIKIPEDIA\//,$p' "${basepath}/Provincias/${provincia_limpia}/article.html" | sed '1d' >> "${tmphtml}" && \
 	cat "${tmphtml}" > "${basepath}/Provincias/${provincia_limpia}/article.html" && \
 	lynx --dump "${wikicomarcas}" | awk '/Comarcas\[/{t=1}; t==1{print; if (/Eco/ || /Demo/ || /Part/){c++}}; c==1{exit}' | sed -e '1d' -e '$d' | sed -e '1d' -e '$d' | cut -d ] -f2 > "${tmpcomarcas}" && \
+	i=0
+	l=0
 	while read -r line
 	do 
 		[ "${line}" ] && \
+			l=$(expr $l + 1) && \
 			comarcalimpia=$(echo $(varsanitizer "${line}") | sed "s|(.*)||g" | sed "s|_$||") && \
-			wget -O "/tmp/${comarcalimpia}.html" "https://es.wikipedia.org/wiki/${comarcalimpia}" && \
-			coord=$(lynx --dump /tmp/${comarcalimpia}.html | grep Coord | awk 'FNR == 2' | cut -d ] -f3 | cut -d \/ -f1) && \
-			pobla=$(lynx --dump /tmp/${comarcalimpia}.html | awk 'f{print;f=0} /Pobla/{f=1}' | head -n 1 | sed "s|(.*)||" | sed "s|^.*\(Total.*$\)|\1|") && \
-			comarca="${comarca}"$(printf '\t\t%s\n' "<tr><td>${coord}</td>") && \
-			comarca="${comarca}"$(printf '\t\t\t%s\n' "<td><a href=\"/Comarcas/${comarcalimpia}/index.html\" title=\"Redama internet rural ilimitado comarca de ${line}\">${line}</a></td>") && \
-			comarca="${comarca}"$(printf '\t\t%s\n' "<td>${pobla}</td></tr>")  || \
-			break 
+			if [ $(echo ${comarcalimpia} | wc -c) -lt 15 ]; then
+				wget -O "/tmp/${comarcalimpia}.html" "https://es.wikipedia.org/wiki/${comarcalimpia}" 
+				coord=$(lynx --dump /tmp/${comarcalimpia}.html | grep Coord | awk 'FNR == 2' | cut -d ] -f3 | cut -d \/ -f1) 
+				pobla=$(lynx --dump /tmp/${comarcalimpia}.html | awk 'f{print;f=0} /Pobla/{f=1}' | head -n 1 | sed "s|(.*)||" | sed "s|^.*\(Total.*$\)|\1|") 
+				comarca="${comarca}"$(printf '\t\t%s\n' "<tr><td>${coord}</td>") 
+				comarca="${comarca}"$(printf '\t\t\t%s\n' "<td><a href=\"/Comarcas/${comarcalimpia}/index.html\" title=\"Redama internet rural ilimitado comarca de ${line}\">${line}</a></td>") 
+				comarca="${comarca}"$(printf '\t\t%s\n' "<td>${pobla}</td></tr>")
+			fi \
+			|| \
+			i=$(expr $i + 1) && \
+			if [ $i -eq 1 ]; then 
+				comarca=""
+				continue
+			 elif [ $i -gt 1 ] && [ $l -gt 3 ]; then 
+			 	break 
+		 	fi 
 	done <"${tmpcomarcas}" && \
 	sed -i "s|/COMARCA/|${comarca}|" "${basepath}/Provincias/${provincia_limpia}/article.html" && \ 
 	cat "${basepath}/Provincias/${provincia_limpia}/header.html" > "${basepath}/Provincias/${provincia_limpia}/index.html" && \
 	cat "${basepath}/Provincias/${provincia_limpia}/article.html" >> "${basepath}/Provincias/${provincia_limpia}/index.html" && \
 	cat "${basepath}/Provincias/${provincia_limpia}/footer.html" >> "${basepath}/Provincias/${provincia_limpia}/index.html"
+	
 read -p "Quieres sanear la carpeta de los escudos de municipios? 1/0 " ctrl
 [ $ctrl = 1 ] && \
 	cd "Img/" && \
