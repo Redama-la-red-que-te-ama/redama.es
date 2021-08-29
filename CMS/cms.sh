@@ -79,14 +79,14 @@ read -p "Quieres añadir páginas sobre las provincias catalanas? 1/0 " ctrl
 			wget -O "/tmp/${comarcalimpia}.html" "https://es.wikipedia.org/wiki/${comarcalimpia}" && \
 			coord=$(lynx --dump /tmp/${comarcalimpia}.html | grep Coord | awk 'FNR == 2' | cut -d ] -f3 | cut -d \/ -f1) && \
 			pobla=$(lynx --dump /tmp/${comarcalimpia}.html | awk 'f{print;f=0} /Pobla/{f=1}' | head -n 1 | sed "s|(.*)||" | sed "s|^.*\(Total.*$\)|\1|") && \
-			comarca="${comarca}"$(printf '\t\t%s\n' "<td>${coord}</td>") && \
+			comarca="${comarca}"$(printf '\t\t%s\n' "<tr><td>${coord}</td>") && \
 			comarca="${comarca}"$(printf '\t\t\t%s\n' "<td><a href=\"/Comarcas/${comarcalimpia}/index.html\" title=\"Redama internet rural ilimitado comarca de ${line}\">${line}</a></td>") && \
-			comarca="${comarca}"$(printf '\t\t%s\n' "<td>${pobla}</td>")  || \
+			comarca="${comarca}"$(printf '\t\t%s\n' "<td>${pobla}</td></tr>")  || \
 			break 
 	done <"${tmpcomarcas}" && \
-	sed -i "s|/COMARCA/|${comarca}|" "${basepath}/Provincias/${provincia_limpia}/article.html"
-	cat "${basepath}/Provincias/${provincia_limpia}/header.html" > "${basepath}/Provincias/${provincia_limpia}/index.html"
-	cat "${basepath}/Provincias/${provincia_limpia}/article.html" >> "${basepath}/Provincias/${provincia_limpia}/index.html"
+	sed -i "s|/COMARCA/|${comarca}|" "${basepath}/Provincias/${provincia_limpia}/article.html" && \ 
+	cat "${basepath}/Provincias/${provincia_limpia}/header.html" > "${basepath}/Provincias/${provincia_limpia}/index.html" && \
+	cat "${basepath}/Provincias/${provincia_limpia}/article.html" >> "${basepath}/Provincias/${provincia_limpia}/index.html" && \
 	cat "${basepath}/Provincias/${provincia_limpia}/footer.html" >> "${basepath}/Provincias/${provincia_limpia}/index.html"
 read -p "Quieres sanear la carpeta de los escudos de municipios? 1/0 " ctrl
 [ $ctrl = 1 ] && \
