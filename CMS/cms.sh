@@ -42,7 +42,7 @@ mark () {
 }
 
 varsanitizer () {
-	name=$(echo "${1}" | sed -e 's|[àÀ]|a|g' -e 's|[èÈ]|e|g' -e 's|[ìÌ]|i|g' -e 's|[òÒ]|o|g' -e 's|[ùÙ]|u|g' -e 's|[áÁ]|a|g' -e 's|[éÉ]|e|g' -e 's|[íÍ]|i|g' -e 's|[óÓ]|o|g' -e 's|[úÚ]|u|g' -e 's|[çÇ]|c|g' -e 's| |_|g' -e "s|'|_|g" )
+	name=$(echo "${1}" | sed -e 's|[àÀ]|a|g' -e 's|[èÈ]|e|g' -e 's|[ìÌ]|i|g' -e 's|[òÒ]|o|g' -e 's|[ùÙ]|u|g' -e 's|[áÁ]|a|g' -e 's|[éÉ]|e|g' -e 's|[íÍ]|i|g' -e 's|[óÓ]|o|g' -e 's|[úÚ]|u|g' -e 's|[çÇ]|c|g' -e 's| |_|g' -e "s|'|%27|g" )
 	echo "${name}"
 }
 
@@ -71,31 +71,33 @@ read -p "Quieres añadir páginas sobre las provincias catalanas? 1/0 " ctrl
 	echo "${wikipedia}" >> "${tmphtml}" && \
 	sed -n '/\/WIKIPEDIA\//,$p' "${basepath}/Provincias/${provincia_limpia}/article.html" | sed '1d' >> "${tmphtml}" && \
 	cat "${tmphtml}" > "${basepath}/Provincias/${provincia_limpia}/article.html" && \
-	lynx --dump "${wikicomarcas}" | awk '/Comarcas\[/{t=1}; t==1{print; if (/Eco/ || /Demo/ || /Part/){c++}}; c==1{exit}' | sed -e '1d' -e '$d' | sed -e '1d' -e '$d' | cut -d ] -f2 > "${tmpcomarcas}" && \
+	lynx --dump "${wikicomarcas}" | awk '/Comarcas\[/{t=1}; t==1{print; if (/Eco/ || /Demo/ || /Part/){c++}}; c==1{exit}' | grep \* | sed "s|(.*$||" | cut -d ] -f2 > "${tmpcomarcas}" && \
 	i=0
 	l=0
 	while read -r line
 	do 
-		[ "${line}" ] && \
-			l=$(expr $l + 1) && \
-			comarcalimpia=$(echo $(varsanitizer "${line}") | sed "s|(.*)||g" | sed "s|_$||") && \
-			if [ $(echo ${comarcalimpia} | wc -c) -lt 15 ]; then
-				wget -O "/tmp/${comarcalimpia}.html" "https://es.wikipedia.org/wiki/${comarcalimpia}" 
+		if [ "${line}" ]; then
+			l=$(expr $l + 1) 
+			comarcalimpia=$(echo $(varsanitizer "`echo ${line} | sed 's|(.*)||g'`") | sed "s|_$||") 
+			if [ $(echo ${comarcalimpia} | wc -c) -lt 20 ]; then
+				wget -O "/tmp/${comarcalimpia}.html" "https://es.wikipedia.org/wiki/${comarcalimpia}"
 				coord=$(lynx --dump /tmp/${comarcalimpia}.html | grep Coord | awk 'FNR == 2' | cut -d ] -f3 | cut -d \/ -f1) 
 				pobla=$(lynx --dump /tmp/${comarcalimpia}.html | awk 'f{print;f=0} /Pobla/{f=1}' | head -n 1 | sed "s|(.*)||" | sed "s|^.*\(Total.*$\)|\1|") 
 				comarca="${comarca}"$(printf '\t\t%s\n' "<tr><td>${coord}</td>") 
 				comarca="${comarca}"$(printf '\t\t\t%s\n' "<td><a href=\"/Comarcas/${comarcalimpia}/index.html\" title=\"Redama internet rural ilimitado comarca de ${line}\">${line}</a></td>") 
 				comarca="${comarca}"$(printf '\t\t%s\n' "<td>${pobla}</td></tr>")
-			fi \
-			|| \
-			i=$(expr $i + 1) && \
-			if [ $i -eq 1 ]; then 
+			fi 
+		else
+			i=$(expr $i + 1) 
+			if [ $i -eq 1 ] && [ $l -lt 3 ]; then 
 				comarca=""
 				continue
-			 elif [ $i -gt 1 ] && [ $l -gt 3 ]; then 
+			 elif [ $i -gt 1 ] && [ $l -ge 3 ]; then 
 			 	break 
 		 	fi 
+	 	fi
 	done <"${tmpcomarcas}" && \
+	echo "${comarca}"
 	sed -i "s|/COMARCA/|${comarca}|" "${basepath}/Provincias/${provincia_limpia}/article.html" && \ 
 	cat "${basepath}/Provincias/${provincia_limpia}/header.html" > "${basepath}/Provincias/${provincia_limpia}/index.html" && \
 	cat "${basepath}/Provincias/${provincia_limpia}/article.html" >> "${basepath}/Provincias/${provincia_limpia}/index.html" && \
