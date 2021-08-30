@@ -2,7 +2,7 @@
 
 #Comunidad autonoma de Catalunya
 
-baseprog=$(dirname $0)
+baseprog=$(pwd)
 wikiprovincias="$(mktemp)"".html"
 wikicomarcas="$(mktemp)"".html"
 wikimunicipios="$(mktemp)"".html"
@@ -21,20 +21,18 @@ CONVERT=/usr/bin/convert
 
 
 sanitizer () {
-	for filename in "Raw/*"; do
-		if [[ $(echo "${filename}") | grep -c "\(1\)" ]]; then
-			rm -rf "${filename}"
-		else
-			newfilename=$(echo "${filename}" | sed 's|"||g' | sed "s|'|e_|g" | sed 's| ||g' | sed 's|Escut|Escudo|g' | sed 's|COA_of_|Escudo_de_|g' \
-				| sed -e 's|[Cc]oa[t|ts]_of_[Aa]rms_of_|Escudo_de_|g' | sed -e 's|[àÀ]|a|g' -e 's|[èÈ]|e|g' -e 's|[ìÌ]|i|g' -e 's|[òÒ]|o|g' -e 's|[ùÙ]|u|g' -e 's|[áÁ]|a|g' -e 's|[éÉ]|e|g' -e 's|[íÍ]|i|g' -e 's|[óÓ]|o|g' -e 's|[úÚ]|u|g' -e 's|[çÇ]|c|g' \
-				| sed 's|-|_|g' | sed 's|Blaso|Escudo|g' | sed 's|_heraldic||g' | sed 's|_[Oo]ficial||g' | sed 's|Logo|Escudo_de|g' | sed 's|Bandera|Escudo_de|g' | sed -e 's|(.*)||g' | sed 's|_\.|.|g' | sed 's|,||g' | sed 's|le_||' | sed 's|les_||' \
-				| sed 's|Escudo_des|Escudo_de|' | sed 's|Escudo_del|Escudo_de|' | sed 's|de_Le|de_le|' | sed 's|de_La|de_la|' | sed 's|Sa|sa|')
-			mv "${filename}" "Sanitized/""${newfilename}"
-		fi
+	for filename in $(find "${1}" -maxdepth 1 -type f); do
+		newfilename=$(echo "${filename}" | sed "s|${1}/||" | sed 's|"||g' | sed "s|'|e_|g" | sed 's| ||g' | sed 's|Escut|Escudo|g' | sed 's|COA_of_|Escudo_de_|g' \
+		| sed -e 's|[Cc]oa[t|ts]_of_[Aa]rms_of_|Escudo_de_|g' | sed -e 's|[àÀ]|a|g' -e 's|[èÈ]|e|g' -e 's|[ìÌ]|i|g' -e 's|[òÒ]|o|g' -e 's|[ùÙ]|u|g' -e 's|[áÁ]|a|g' -e 's|[éÉ]|e|g' -e 's|[íÍ]|i|g' -e 's|[óÓ]|o|g' -e 's|[úÚ]|u|g' -e 's|[çÇ]|c|g' \
+		| sed 's|-|_|g' | sed 's|Blaso|Escudo|g' | sed 's|_heraldic||g' | sed 's|_[Oo]ficial||g' | sed 's|Logo|Escudo_de|g' | sed 's|Bandera|Escudo_de|g' | sed -e 's|(.*)||g' | sed 's|_\.|.|g' | sed 's|,||g' | sed 's|le_||' | sed 's|les_||' \
+		| sed 's|Escudo_des|Escudo_de|' | sed 's|Escudo_del|Escudo_de|' | sed 's|de_Le|de_le|' | sed 's|de_La|de_la|' | sed 's|Sa|sa|' | sed 's|Localitzacio|Mapa|')
+		echo $newfilename
+		cp "${filename}" "${1}/../Sanitized/${newfilename}"
 	done
 }
 
 mark () {
+	
 	ls -1 Sanitized/* | awk -F\/ '{print "composite -compose multiply -gravity SouthWest watermark/watermark.jpg Sanitized/"$(NF)" Watermarked/"$(NF)".jpg"}' | sh
 	ls -1 Watermarked/* | awk -F\/ '{print "composite -compose multiply -gravity SouthEast watermark/watermark2.jpg Watermarked/"$(NF)" /tmp/"$(NF)" && mv /tmp/"$(NF)" Watermarked/"}' | sh
 	ls -1 Watermarked/* | awk -F\/ '{print "convert -resize 400 Watermarked/"$(NF)" /tmp/"$(NF)" && mv /tmp/"$(NF)" Watermarked/"}' | sh
@@ -86,8 +84,7 @@ read -p "Quieres añadir páginas sobre las provincias catalanas? 1/0 " ctrl
 	sed -n '/\/WIKIPEDIA\//,$p' "${basepath}/Provincias/${provincia_limpia}/article.html" | sed '1d' >> "${tmphtml}" && \
 	cat "${tmphtml}" > "${basepath}/Provincias/${provincia_limpia}/article.html" && \
 	lynx --dump "${wikicomarcas}" | awk '/Comarcas\[/{t=1}; t==1{print; if (/Eco/ || /Demo/ || /Part/){c++}}; c==1{exit}' | grep \* | sed "s|(.*$||" | cut -d ] -f2 > "${tmpcomarcas}" && \
-	i=0
-	l=0
+	i=0 ; l=0 && \
 	while read -r line
 	do 
 		if [ "${line}" ]; then
@@ -111,20 +108,19 @@ read -p "Quieres añadir páginas sobre las provincias catalanas? 1/0 " ctrl
 		 	fi 
 	 	fi
 	done <"${tmpcomarcas}" && \
-	echo "${comarca}"
-	sed -i "s|/COMARCA/|${comarca}|" "${basepath}/Provincias/${provincia_limpia}/article.html" && \ 
+	sed -i "s|/COMARCA/|${comarca}|" "${basepath}/Provincias/${provincia_limpia}/article.html" && \
 	cat "${basepath}/Provincias/${provincia_limpia}/header.html" > "${basepath}/Provincias/${provincia_limpia}/index.html" && \
 	cat "${basepath}/Provincias/${provincia_limpia}/article.html" >> "${basepath}/Provincias/${provincia_limpia}/index.html" && \
 	cat "${basepath}/Provincias/${provincia_limpia}/footer.html" >> "${basepath}/Provincias/${provincia_limpia}/index.html"
 	
+echo $baseprog
 read -p "Quieres sanear la carpeta de los escudos y banderas de comarcas? 1/0 " ctrl
 [ $ctrl = 1 ] && \
-	cd "Img/" && \
-	sanitizer
+	sanitizer "$(pwd)/Img/Comarcas/Raw"
 cd $baseprog
 read -p "Quieres aplicar filigrana a todos los escudos y banderas de comarcas? 1/0 " ctrl
 [ $ctrl = 1 ] && \
-	cd "Img/" && \
+	cd "Img/Comarcas/" && \
 	mark && \
 	cd "Watermarked/" && \
 	for file in *; do  name=$(echo $file | cut -d . -f1); mv ${file} ${name}".jpg"; done
