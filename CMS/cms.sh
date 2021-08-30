@@ -21,7 +21,7 @@ CONVERT=/usr/bin/convert
 
 
 sanitizer () {
-	for filename in *; do
+	for filename in "Raw/*"; do
 		if [[ $(echo "${filename}") | grep -c "\(1\)" ]]; then
 			rm -rf "${filename}"
 		else
@@ -45,6 +45,20 @@ varsanitizer () {
 	name=$(echo "${1}" | sed -e 's|[àÀ]|a|g' -e 's|[èÈ]|e|g' -e 's|[ìÌ]|i|g' -e 's|[òÒ]|o|g' -e 's|[ùÙ]|u|g' -e 's|[áÁ]|a|g' -e 's|[éÉ]|e|g' -e 's|[íÍ]|i|g' -e 's|[óÓ]|o|g' -e 's|[úÚ]|u|g' -e 's|[çÇ]|c|g' -e 's| |_|g' -e "s|'|%27|g" )
 	echo "${name}"
 }
+
+read -p "Quieres sanear la carpeta de los escudos de provincias? 1/0 " ctrl
+[ $ctrl = 1 ] && \
+	cd "Img/Provincias/" && \
+	sanitizer
+cd $baseprog
+
+read -p "Quieres aplicar filigrana a todas los escudos de provincias? 1/0 " ctrl
+[ $ctrl = 1 ] && \
+	cd "Img/Provincias/" && \
+	mark && \
+	cd "Watermarked/" && \
+	for file in *; do  name=$(echo $file | cut -d . -f1); mv ${file} ${name}".jpg"; done
+cd $baseprog
 
 read -p "Quieres añadir páginas sobre las provincias catalanas? 1/0 " ctrl
 [ $ctrl = 1 ] && \
@@ -103,12 +117,12 @@ read -p "Quieres añadir páginas sobre las provincias catalanas? 1/0 " ctrl
 	cat "${basepath}/Provincias/${provincia_limpia}/article.html" >> "${basepath}/Provincias/${provincia_limpia}/index.html" && \
 	cat "${basepath}/Provincias/${provincia_limpia}/footer.html" >> "${basepath}/Provincias/${provincia_limpia}/index.html"
 	
-read -p "Quieres sanear la carpeta de los escudos de municipios? 1/0 " ctrl
+read -p "Quieres sanear la carpeta de los escudos y banderas de comarcas? 1/0 " ctrl
 [ $ctrl = 1 ] && \
 	cd "Img/" && \
 	sanitizer
 cd $baseprog
-read -p "Quieres aplicar filigrana a todas las imagenes? 1/0 " ctrl
+read -p "Quieres aplicar filigrana a todos los escudos y banderas de comarcas? 1/0 " ctrl
 [ $ctrl = 1 ] && \
 	cd "Img/" && \
 	mark && \
