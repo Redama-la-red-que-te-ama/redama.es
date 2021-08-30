@@ -132,6 +132,20 @@ cd $baseprog
 read -p "Quieres aplicar filigrana a todos los escudos y banderas de comarcas? 1/0 " ctrl
 [ $ctrl = 1 ] && \
 	mark "$(pwd)/Img/Comarcas/" "comarcas" 
+
 cd $baseprog
+
+for prov in $(find "${basepath}/Provincias/" -type d); do
+	provi=$(echo $prov | sed "s|`dirname $prov`/||")
+	if [ $(echo $provi | grep -c "Provincias") = 0 ]; then 
+		read -p "Quieres añadir páginas sobre las comarcas de la provincia de ${provi}? 1/0 " ctrl
+		[ $ctrl = 1 ] && \
+			for comarca in $(varsanitizer "`lynx --dump http://catalunya.redama.es/Provincias/${provi}/index.html | awk '/Coor/{t=1}; t==1{print; if (/Internet/){c++}}; c==1{exit}' | grep ] | cut -d ] -f2 | cut -d T -f1 | sed "s| *$||"`"); do
+				[ ! -d "${basepath}/Comarcas/${comarca}" ] && mkdir "${basepath}/Comarcas/${comarca}"
+				wget -O "/tmp/${comarca}.html" "https://es.wikipedia.org/wiki/${comarca}"
+			done
+	fi
+done
+
 
 
