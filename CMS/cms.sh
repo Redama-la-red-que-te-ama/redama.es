@@ -35,9 +35,10 @@ mark () {
 		"provincias")
 			for file in $(find "${1}/Sanitized/" -maxdepth 1 -type f); do
 				filename=$(echo "${file}" | sed "s|${1}/Sanitized/||")
-				echo $filename | awk -F\/ '{print "composite -compose multiply -gravity SouthWest Img/watermark/watermark.jpg Img/Provincias/Sanitized/"$(NF)" Img/Provincias/Watermarked/"$(NF)".jpg"}' | sh
-				echo $filename | awk -F\/ '{print "composite -compose multiply -gravity SouthEast Img/watermark/watermark2.jpg Img/Provincias/Watermarked/"$(NF)" /tmp/"$(NF)" && mv /tmp/"$(NF)" Img/Provincias/Watermarked/"}' | sh
-				echo $filename | awk -F\/ '{print "convert -resize 400 Img/Provincias/Watermarked/"$(NF)" /tmp/"$(NF)" && mv /tmp/"$(NF)" Img/Provincias/Watermarked/"}' | sh
+				name=$(echo $filename | cut -d . -f1)
+				printf '%s\n' "composite -compose multiply -gravity SouthWest Img/watermark/watermark.jpg Img/Provincias/Sanitized/${filename} Img/Provincias/Watermarked/${name}.jpg" | sh
+				printf '%s\n' "composite -compose multiply -gravity SouthEast Img/watermark/watermark2.jpg Img/Provincias/Watermarked/${name}.jpg /tmp/${name}.jpg ; mv /tmp/${name}.jpg Img/Provincias/Watermarked/" | sh
+				printf '%s\n' "convert -resize 400 Img/Provincias/Watermarked/${name}.jpg /tmp/${name}.jpg ; mv /tmp/${name}.jpg Img/Provincias/Watermarked/" | sh
 				
 			done
 		;;
@@ -124,7 +125,6 @@ read -p "Quieres añadir páginas sobre las provincias catalanas? 1/0 " ctrl
 	cat "${basepath}/Provincias/${provincia_limpia}/article.html" >> "${basepath}/Provincias/${provincia_limpia}/index.html" && \
 	cat "${basepath}/Provincias/${provincia_limpia}/footer.html" >> "${basepath}/Provincias/${provincia_limpia}/index.html"
 	
-echo $baseprog
 read -p "Quieres sanear la carpeta de los escudos y banderas de comarcas? 1/0 " ctrl
 [ $ctrl = 1 ] && \
 	sanitizer "$(pwd)/Img/Comarcas/Raw"
@@ -133,4 +133,5 @@ read -p "Quieres aplicar filigrana a todos los escudos y banderas de comarcas? 1
 [ $ctrl = 1 ] && \
 	mark "$(pwd)/Img/Comarcas/" "comarcas" 
 cd $baseprog
+
 
