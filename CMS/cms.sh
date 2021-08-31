@@ -135,7 +135,6 @@ read -p "Quieres añadir páginas sobre las provincias catalanas? 1/0 " ctrl
 		 	fi
 		done <"${tmpcomarcas}" 
 	else
-		echo "ok" 
 		lynx --dump "${wikicomarcas}" | awk '/Comarcas\[/{t=1}; t==1{print; if (/Eco/ || /Demo/ || /Part/){c++}}; c==1{exit}' > "${tmpcomarcas}" && \
 		for comarcalimpia in $(varsanitizer "`cat "${tmpcomarcas}" | tr ] '\n' | grep '^[A-Z]' | sed "s|\[.*||g" | sed "s|(.*)||g" | sed "s|[,.]||g" | sed "s| y $||g" | sed "s| $||g" | sed '1d' | sed '$d'`" "left"); do
 			if [ $(echo ${comarcalimpia} | wc -c) -lt 20 ]; then
@@ -182,8 +181,28 @@ for prov in $(find "${basepath}/Provincias/" -type d); do
 		read -p "Quieres añadir páginas sobre las comarcas de la provincia de ${provi}? 1/0 " ctrl
 		[ $ctrl = 1 ] && \
 			for comarca in $(varsanitizer "`lynx --dump http://catalunya.redama.es/Provincias/${provi}/index.html | awk '/Coor/{t=1}; t==1{print; if (/Internet/){c++}}; c==1{exit}' | grep ] | cut -d ] -f2 | cut -d T -f1 | sed "s| *$||"`" "left"); do
+				if [ "${comarca}" = "Valles" ]; then comarca="Valles_Oriental"; fi;
+				if [ "${comarca}" = "Noya" ]; then comarca="Noya_(comarca_de_Cataluña)"; fi;
+				if [ "${comarca}" = "Selva" ]; then comarca="Selva_(comarca)"; fi;
+				if [ "${comarca}" = "El_Priorato" ]; then comarca="Priorato_(Tarragona)"; fi;
+				if [ "${comarca}" = "Urgel" ]; then comarca="Urgel_(Cataluña)"; fi;
 				[ ! -d "${basepath}/Comarcas/${comarca}" ] && mkdir "${basepath}/Comarcas/${comarca}"
+				install -o "${userna}" -g "${groupna}" -m 0640 Comarcas/header.html  "${basepath}/Comarcas/${comarca}/header.html" 
+				install -o "${userna}" -g "${groupna}" -m 0640 Comarcas/article.html  "${basepath}/Comarcas/${comarca}/article.html" 
+				install -o "${userna}" -g "${groupna}" -m 0640 Comarcas/footer.html  "${basepath}/Comarcas/${comarca}/footer.html" 
+				sed -i "s|/COMARCA/|${comarca}|g"  "${basepath}/Comarcas/${comarca}/header.html" && \
+				sed -i "s|/COMARCA/|${comarca}|g"  "${basepath}/Comarcas/${comarca}/article.html" && \
+				sed -i "s|/COMARCA/|${comarca}|g"  "${basepath}/Comarcas/${comarca}/footer.html" && \
+				sed -i "s|/FECHA/|${fecha}|g"  "${basepath}/Comarcas/${comarca}/footer.html" && \
+				#sed -i "s|/ESCUDOPROVINCIA/|Escudo_de_la_provincia_de_${provincia_limpia}.jpg|" "${basepath}/Provincias/${provincia_limpia}/article.html"
 				wget -O "/tmp/${comarca}.html" "https://es.wikipedia.org/wiki/${comarca}"
+				cat "/tmp/${comarca}.html" | awk "/<b>${comarca}/,/<\/p>/" > "${tmphtml}"
+				wikipedia=$(lynx --dump "${tmphtml}" |  awk -v RS= 'NR==1'| sed -e 's|\]|\] |g' |  sed "s|\[[0-9]\]||g" |  sed "s|\[[0-9][0-9]\]||g" | sed "s|\^||g" | sed "s|&*&||g")
+				awk '1;/\/WIKIPEDIA\//{exit}' "${basepath}/Comarcas/${comarca}/article.html" | awk 'NR>2 {print last} {last=$0}' > "${tmphtml}"
+				echo "${wikipedia}" >> "${tmphtml}" 
+				sed -n '/\/WIKIPEDIA\//,$p' "${basepath}/Comarcas/${comarca}/article.html"  | sed '1d' >> "${tmphtml}" 
+				cat "${tmphtml}" > "${basepath}/Comarcas/${comarca}/article.html"
+				#| awk '/Municipios\[/{t=1}; t==1{print; if (/Refe/){c++}}; c==1{exit}' | grep '\[' | sed '1d' | sed '$d' | tr '\[' '\n' | grep -v Localitz
 			done
 	fi
 done
