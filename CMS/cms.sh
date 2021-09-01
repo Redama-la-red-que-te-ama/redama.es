@@ -194,7 +194,10 @@ for prov in $(find "${basepath}/Provincias/" -type d); do
 				[ $( echo $imgtest | wc -c ) = 1 ] && imgtest=$(echo "${comarcalimpia}" | head -c 4)
 				[ $( echo $imgtest | wc -c ) = 1 ] && imgtest=$(echo "${comarcalimpia}" | tail -c 4)
 				escudo=$(ls -1 "${baseprog}/Img/Comarcas/Watermarked/" | grep "${imgtest}" | awk 'FNR == 1')
-				echo $escudo
+				if [ "${comarcalimpia}" = "Noya_(comarca_de_Cataluña)" ]; then escudo="Escudo_de_Noya.jpg"; fi;
+				if [ "${comarcalimpia}" = "Bergadá" ]; then escudo="Escudo_de_Bergada.jpg"; fi;
+				if [ "${comarcalimpia}" = "Selva_(comarca)" ]; then escudo="Mapa_de_la_Selva.jpg"; fi;
+				if [ "${comarcalimpia}" = "Priorato_(Tarragona)" ]; then escudo="Escudo_de_Priorato.jpg"; fi;
 				sed -i "s|/ESCUDOCOMARCA/|${escudo}|" "${basepath}/Comarcas/${comarcalimpia}/article.html"
 				wget -q -O "/tmp/${comarcalimpia}.html" "https://es.wikipedia.org/wiki/${comarcalimpia}"
 				cat "/tmp/${comarcalimpia}.html" | awk "/<b>${line}/,/<\/p>/" > "${tmphtml}"
