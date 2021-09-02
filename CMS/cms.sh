@@ -17,7 +17,7 @@ tmpcomarcas=$(mktemp)
 tmpcomarcas2=$(mktemp)
 tmpmunicipios=$(mktemp)
 comarca=""
-municipios=""
+
 
 COMPOSITE=/usr/bin/composite
 CONVERT=/usr/bin/convert
@@ -60,13 +60,20 @@ mark () {
 varsanitizer () {
 	case "${2}" in
 		"left")
-			name=$(echo "${1}" | sed -e 's|[àÀ]|a|g' -e 's|[èÈ]|e|g' -e 's|[ìÌ]|i|g' -e 's|[òÒ]|o|g' -e 's|[ùÙ]|u|g' -e 's|[áÁ]|a|g' -e 's|[éÉ]|e|g' -e 's|[íÍ]|i|g' -e 's|[óÓ]|o|g' -e 's|[úÚ]|u|g' -e 's|[çÇ]|c|g' -e 's| |_|g' -e "s|'|%27|g" )
+			name=$(echo "${1}" | sed -e 's|[àÀ]|a|g' -e 's|[èÈ]|e|g' -e 's|[ìÌ]|i|g' -e 's|[òÒ]|o|g' -e 's|[ùÙ]|u|g' -e 's|[áÁ]|a|g' -e 's|[éÉ]|e|g' -e 's|[íÍ]|i|g' -e 's|[óÓ]|o|g' -e 's|[úÚ]|u|g' -e 's|[çÇ]|c|g' -e 's| |_|g' -e "s|'|_|g" )
 		;;
 		"right")
 			name=$(echo "${1}" | sed -e 's|_| |g' -e "s|%27|'|g" | sed "s|(.*)||g" )
 		;;
 	esac
 	echo "${name}"
+}
+
+urisanitizer () {
+	name=$(echo "${1}" | sed -e "s|á|%C3%A1|g" -e "s|à|%C3%A0|g" -e "s|é|%C3%A9|g" -e "s|è|%C3%A8|g"   -e "s|í|%C3%AD|g" -e "s|ó|%C3%B3|g" -e "s|ò|%C3%B2|g" -e "s|ú|%C3%BA|g" -e "s|ü|%C3%BC" -e "s|ç|%C3%A7|g" -e "s|'|%27|g" \
+		-e "s|ñ|%C3%B1|g" -e "s|:|%3A|g" -e "s|/|%2F|g")
+	echo "${name}"
+	
 }
 
 read -p "Quieres sanear la carpeta de los escudos de provincias? 1/0 " ctrl
@@ -168,7 +175,7 @@ for prov in $(find "${basepath}/Provincias/" -type d); do
 	if [ $(echo $provi | grep -c "Provincias") = 0 ]; then 
 		read -p "Quieres añadir páginas sobre las comarcas de la provincia de ${provi}? 1/0 " ctrl
 		[ $ctrl = 1 ] && \
-			lynx --dump "http://catalunya.redama.es/Provincias/${provi}/index.html" | awk '/Coor/{t=1}; t==1{print; if (/Internet/){c++}}; c==1{exit}' | grep ] | cut -d ] -f2 | cut -d T -f1 | sed "s| *$||" > "${tmpmunicipios}" && \
+			lynx --dump "http://catalunya.redama.es/Provincias/${provi}/index.html" | awk '/Coor/{t=1}; t==1{print; if (/Internet/){c++}}; c==1{exit}' | grep ] | cut -d ] -f2 | sed 's|Total.*$||g' > "${tmpcomarcas}" && \
 			i=0 ; l=0 &&\
 			while read -r line	
 			do 
@@ -187,6 +194,8 @@ for prov in $(find "${basepath}/Provincias/" -type d); do
 				sed -i "s|/COMARCA/|${line}|g"  "${basepath}/Comarcas/${comarcalimpia}/article.html"
 				sed -i "s|/COMARCA/|${line}|g"  "${basepath}/Comarcas/${comarcalimpia}/footer.html" 
 				sed -i "s|/FECHA/|${fecha}|g"  "${basepath}/Comarcas/${comarcalimpia}/footer.html" 
+				uri="https%3A%2F%2Fcatalunya.redama.es%2FComarcas%2F${comarcalimpia}%2Findex.html"
+				sed -i "s|/URI/|${uri}|"  "${basepath}/Comarcas/${comarcalimpia}/footer.html"
 				a=$(echo "${comarcalimpia}" | wc -c)
 				b=$(expr $a / 2)
 				c=$(expr $b + 4)
@@ -200,19 +209,48 @@ for prov in $(find "${basepath}/Provincias/" -type d); do
 				if [ "${comarcalimpia}" = "Priorato_(Tarragona)" ]; then escudo="Escudo_de_Priorato.jpg"; fi;
 				sed -i "s|/ESCUDOCOMARCA/|${escudo}|" "${basepath}/Comarcas/${comarcalimpia}/article.html"
 				wget -q -O "/tmp/${comarcalimpia}.html" "https://es.wikipedia.org/wiki/${comarcalimpia}"
-				cat "/tmp/${comarcalimpia}.html" | awk "/<b>${line}/,/<\/p>/" > "${tmphtml}"
+				cat "/tmp/${comarcalimpia}.html" | sed "s|Bagés|Bages|g" | awk "/<b>${line}/,/<\/p>/" > "${tmphtml}"
 				wikipedia=$(lynx --dump "${tmphtml}" |  awk -v RS= 'NR==1'| sed -e 's|\]|\] |g' |  sed "s|\[[0-9]\]||g" |  sed "s|\[[0-9][0-9]\]||g" | sed "s|\^||g" | sed "s|&*&||g")
 				awk '1;/\/WIKIPEDIA\//{exit}' "${basepath}/Comarcas/${comarcalimpia}/article.html" | awk 'NR>2 {print last} {last=$0}' > "${tmphtml}"
 				echo "${wikipedia}" >> "${tmphtml}" 
 				sed -n '/\/WIKIPEDIA\//,$p' "${basepath}/Comarcas/${comarcalimpia}/article.html"  | sed '1d' >> "${tmphtml}" 
 				cat "${tmphtml}" > "${basepath}/Comarcas/${comarcalimpia}/article.html"
+				wikicomarca="${comarcalimpia}"
+				if [ "${comarcalimpia}" = "Alto_Panades" ]; then wikicomarca="Alto_Penedes"; fi;
+				if [ "${comarcalimpia}" = "Maresme" ]; then wikicomarca="El_Maresme"; fi;
+				lynx --dump "https://es.wikipedia.org/wiki/${wikicomarca}" |  grep -v Municipios | awk '/Municipio/{t=1}; t==1{print; if (/Véa/ || /Ref/ || /Hist/ || /Cons/ || /Lug/ || /Demo/ || /TOT/ || /Eco/ || /Veg/ || /Comu/ || /Enla/ || /Geogra/ || /Tercios/ || /Turismo/){c++}}; c==1{exit}' | grep '\[' | sed '$d' | tr '[' '\n' | cut -d ] -f2 | sed "s|(.*$||g" | sed "s|[0-9]*||g" | sed "s|[0-9].*$||g" | sed "s|^ .*$||g" | awk 'NF' | sed "/[)-]/d" |  sed "s|,.*$||g" | sed "s| $||g" | sed "s| .$||g" | sed "/^ .*/d" | sed "s|&*&||g" | grep -v Bandera | grep -v Escudo | grep -v Comú | grep -v Área | grep -v Municipio | grep -v Localitz > "${tmpmunicipios}"
+				if [ ! -s  $tmpmunicipios ]; then lynx --dump "https://es.wikipedia.org/wiki/${wikicomarca}" |  grep -v Municipios | awk '/Habitantes/{t=1}; t==1{print; if (/Véa/ || /Ref/ || /Hist/ || /Cons/ || /Lug/ || /Demo/){c++}}; c==1{exit}' | grep '\[' | sed '$d' | tr '[' '\n' | cut -d ] -f2 | sed "s|(.*$||g" | sed "s|[0-9]*||g" | awk 'NF' | sed "s|,.*$||g" | sed "s| $||g" | sed "s|&*&||g" | sed "s| .$||g" | grep -v Bandera | grep -v Escudo | grep -v Comú | grep -v Área | grep -v Municipio > "${tmpmunicipios}"; fi;
+				if [ ! -s  $tmpmunicipios ]; then lynx --dump "https://es.wikipedia.org/wiki/${wikicomarca}" |  grep -v Municipios | awk '/Ciudad/{t=1}; t==1{print; if (/Véa/ || /Ref/ || /Hist/ || /Cons/ || /Lug/ || /Demo/){c++}}; c==1{exit}' | grep '\[' | sed '$d' | tr '[' '\n' | cut -d ] -f2 | sed "s|(.*$||g" | sed "s|[0-9]*||g" | awk 'NF' | sed "s|,.*$||g" | sed "s| $||g" | sed "s|&*&||g"  | sed "s| .$||g" | grep -v Bandera | grep -v Escudo | grep -v Comú | grep -v Área | grep -v Municipio | grep -v Junts  | grep -v Agrup | grep \- | sed "s| -*$||g" > "${tmpmunicipios}"; fi;
+				if [ ! -s  $tmpmunicipios ]; then lynx --dump "https://es.wikipedia.org/wiki/${wikicomarca}" |  grep -v Municipios | awk '/Ciudad/{t=1}; t==1{print; if (/TOT/){c++}}; c==1{exit}' | grep '\[' | sed '$d' | tr '[' '\n' | cut -d ] -f2 | sed "s|[0-9].*$||g" | sed "s|^ .*$||g" | awk 'NF' | sed "/[)-]/d" > "${tmpmunicipios}"; fi;
+				if [ $(wc -l "${tmpmunicipios}" | awk '{print $1}') -eq 1 ]; then lynx --dump "https://es.wikipedia.org/wiki/${wikicomarca}" |  grep -v Municipios | awk '/Ciudad/{t=1}; t==1{print; if (/Organización/){c++}}; c==1{exit}' | grep '\[' | sed '$d' | tr '[' '\n' | cut -d ] -f2 | sed "s|(.*$||g" | sed "s|[0-9]*||g" | sed "s|,.*$||g" | sed "s| $||g" | sed "s|&*&||g"  | sed "s| .$||g" | sed "s|^ .*$||g" | sed "/)/d" | awk 'NF'  | grep -v Bandera | grep -v Escudo | grep -v Comú | grep -v Área | grep -v Municipio | grep -v Localitz | grep -v [gG]rup | grep -v Junts  | grep -v JxC | grep -v Xavier  | grep -v Marta | grep -v Tot\ per | grep -v Decidim | grep -v Ignasi | grep -v Podem > "${tmpmunicipios}"; fi;
+				municipio=""
+				while read -r line
+				do
+					if [ "${line}" ]; then
+						municipiolimpio=$(varsanitizer "${line}" "left")
+						if [ $(echo ${municipiolimpio} | wc -c) -gt 4 ] || [ ${municipiolimpio} = "Bot" ]; then
+							if [ -e "${baseprog}/Municipios/Wikipedia/${municipiolimpio}.html" ]; then 
+								postal=$(lynx --dump "${baseprog}/Municipios/Wikipedia/${municipiolimpio}.html" | grep Código\ postal | awk '{print $3}') 
+								www=$(lynx --dump "${baseprog}/Municipios/Wikipedia/${municipiolimpio}.html" | grep Sitio\ web | awk '{print $3}' | sed "s|\[.*\]||g") 
+							else
+								wget -O "${baseprog}/Municipios/Wikipedia/${municipiolimpio}.html" "https://es.wikipedia.org/wiki/${municipiolimpio}"
+								postal=$(lynx --dump "https://es.wikipedia.org/wiki/${municipiolimpio}" | grep Código\ postal | awk '{print $3}') 
+								www=$(lynx --dump "https://es.wikipedia.org/wiki/${municipiolimpio}" | grep Sitio\ web | awk '{print $3}' | sed "s|\[.*\]||g")
+							fi
+							municipio="${municipio}"$(printf '\t\t%s\n' "<tr><td><strong>${postal}</strong></td>") 
+							municipio="${municipio}"$(printf '\t\t\t%s\n' "<td><a href=\"/Municipios/${municipiolimpio}/index.html\" title=\"Redama internet rural ilimitado en el municipio de ${line}\">${line}</a></td>") 
+							municipio="${municipio}"$(printf '\t\t%s\n' "<td><a href=\"http://${www}\" title=\"Redama internet, WiFi4EU, teléfonia y servicios en el municipio de ${line}\">${www}</a></td></tr>")
+						fi
+					fi
+				done <"${tmpmunicipios}" 
+				sed -i "s|/MUNICIPIO/|${municipio}|" "${basepath}/Comarcas/${comarcalimpia}/article.html" 
 				cat "${basepath}/Comarcas/${comarcalimpia}/header.html" > "${basepath}/Comarcas/${comarcalimpia}/index.html"
 				cat "${basepath}/Comarcas/${comarcalimpia}/article.html" >> "${basepath}/Comarcas/${comarcalimpia}/index.html"
 				cat "${basepath}/Comarcas/${comarcalimpia}/footer.html" >> "${basepath}/Comarcas/${comarcalimpia}/index.html"
 				rm -rf "${basepath}/Comarcas/${comarcalimpia}/header.html" 
 				rm -rf "${basepath}/Comarcas/${comarcalimpia}/article.html" 
 				rm -rf "${basepath}/Comarcas/${comarcalimpia}/footer.html" 
-			done <"${tmpmunicipios}" 
+			done <"${tmpcomarcas}" 
 	fi 		
 done
 
