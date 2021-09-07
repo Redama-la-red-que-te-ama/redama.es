@@ -18,16 +18,19 @@ tmpcomarcas=$(mktemp)
 tmpcomarcas2=$(mktemp)
 tmpmunicipios=$(mktemp)
 comarca=""
-counter=1
 
 cc=($(lynx --dump https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2\#Officially_assigned_code_elements | grep '\[[0-9][0-9][0-9][0-9]\][A-Z][A-Z]$' | cut -d \] -f2 | uniq | tr [:upper:] [:lower:]))
-CC=($(lynx --dump https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2\#Officially_assigned_code_elements | grep '\[[0-9][0-9][0-9][0-9]\][A-Z][A-Z]$' | cut -d \] -f2 | uniq))
+duckduckparam=($(curl -sSf https://raw.githubusercontent.com/Redama-la-red-que-te-ama/redama.es/main/CMS/duckduckparams | awk '{print $1}'))
+
 
 for proxy in $(dig openbsd.telecom.lobby TXT +short | sed 's/\"//g' | tr \; '\n' | sed '$d'); do
 	PROXYLOCAL+=("${proxy}"".telecom.lobby:31338")
 done
 for proxy in $(curl -sSf "https://raw.githubusercontent.com/clarketm/proxy-list/master/proxy-list-raw.txt"); do
 		PROXY+=("${proxy}")
+done
+for proxy in $(lynx --dump https://scrapingant.com/free-proxies/ | awk '/IP/{t=1}; t==1{print; if (/Web/){c++}}; c==1{exit}' | awk 'NF' | awk '{print $1 ":" $2}' | sed '$d' | sed '1d'); do
+	PROXY+=("${proxy}")
 done
 
 COMPOSITE=/usr/bin/composite
@@ -68,6 +71,11 @@ ccrand () {
 		echo ${cc[$rand]}
 }
 
+duckrand () {
+	local rand=$[$RANDOM % ${#duckduckparam[@]}]
+	echo ${duckduckparam[$rand]}
+}
+
 proxyrand () {
 	local rand=$[$RANDOM % ${#PROXY[@]}]
 	port=${PROXY[$rand]/${PROXY[$rand]%:*}/}
@@ -79,30 +87,44 @@ localproxyrand () {
 	echo ${PROXYLOCAL[$rand]}
 }
 
+lynxsanitizer () {
+	while read -r data; do
+		 printf "%s\n" "$data" | grep -v 'Bandera\|Escudo\|Comú\|Área\|Municipio\|Localitz\|PSC\|ERC\|CUP\|CiU\|[gG]rup\|Junts\|JxC\|Xavier\|Marta\|Tot\ per\|Decidim\|Ignasi\|Podem\|Alternativa\|Assemblea\|Laura\|Carlos\|Jordi\|Superficie\|PPC\|ICV\|Ciudad'
+	done
+  #echo "${asdf}" | grep -v 'Bandera\|Escudo\|Comú\|Área\|Municipio\|Localitz\|PSC\|ERC\|CUP\|CiU\|[gG]rup\|Junts\|JxC\|Xavier\|Marta\|Tot\ per\|Decidim\|Ignasi\|Podem\|Alternativa\|Assemblea'
+}
+
 urisearch () {
+	declare -i counter=$6
 	let counter+=1
 
+	if [ `expr $counter % 2` == 0 ]; then
+		proxy=$(localproxyrand)
+		prog="/usr/bin/ddgr"
+		opt="-r `duckrand`"
+	else
+		proxy=$(localproxyrand)
+		prog="/usr/bin/ddgr"
+		opt="-r `duckrand`"
+	fi
 	if [ $counter == 6 ]; then
 		proxy=$(proxyrand)
 		prog="/usr/bin/googler"
 		opt="-g `ccrand`"
-	elif [ `expr $counter % 2` == 0 ]; then
+	elif [ $counter == 12 ]; then
 		proxy=$(localproxyrand)
-		prog="/usr/bin/ddgr"
-		opt="-r `ccrand`"
-	else
-		proxy=$(localproxyrand)
-		prog="/usr/bin/ddgr"
-		opt="-r `ccrand`"
+		prog="/usr/bin/googler"
+		opt="-g `ccrand`"
+		let counter=0
 	fi
 
 	uri=$(timeout 2 ${prog} -w es.wikipedia.org --proxy ${proxy} -n4 --np --json ${opt} -x "${1}" "${2}" "${3}" "${4}" "${5}" 2>&1)
 	[[ "${uri}" ]] && [[ "${uri}" != \[ERROR\]* ]] && \
-		url=$(echo "${uri}" | grep url | grep -v '[Aa]nexo\|[Cc]omarca\|[Pp]ortada\|[Pp]ueblos\|[Cc]ategoría\|'"${3}"'' | cut -d \" -f4 | awk 'FNR == 1') && \
+		url=$(echo "${uri}" | grep url | grep -v '[Aa]nexo\|[Cc]omarca\|[Pp]ortada\|[Pp]ueblos\|[Cc]ategor\|'"${3}"'' | cut -d \" -f4 | awk 'FNR == 1') && \
 		[[ "${url}" ]] && [ $(curl -s --head "${url}" | head -n 1 | awk '{print $2}') -ne 404 ] && \
 			echo "${url}" \
 		|| \
-		urisearch "${1}" "${2}" "${3}" "${4}" "${5}" "${call}" $counter
+		eval "urisearch" $(shuf -i 1-2 | paste - -s -d ' ' | sed "s|\([0-9]\)|\"\$\{\1\}\"|g") "${3}" $(shuf -i 4-5 | paste - -s -d ' ' | sed "s|\([0-9]\)|\"\$\{\1\}\"|g") "${counter}"
 }
 
 sanitizer () {
@@ -114,6 +136,8 @@ sanitizer () {
 		cp "${filename}" "${1}/../Sanitized/${newfilename}"
 	done
 }
+
+
 
 mark () {
 	case "${2}" in
@@ -308,11 +332,11 @@ for prov in $(find "${basepath}/Provincias/" -type d); do
 				wikicomarca="${comarcalimpia}"
 				if [ "${comarcalimpia}" = "Alto_Panades" ]; then wikicomarca="Alto_Penedés"; fi;
 				if [ "${comarcalimpia}" = "Maresme" ]; then wikicomarca="El_Maresme"; fi;
-				lynx --dump --display_charset=utf-8 "https://es.wikipedia.org/wiki/${wikicomarca}" |  grep -v Municipios | awk '/Municipio/{t=1}; t==1{print; if (/Véa/ || /Ref/ || /Hist/ || /Cons/ || /Lug/ || /Demo/ || /TOT/ || /Eco/ || /Veg/ || /Comu/ || /Enla/ || /Geogra/ || /Tercios/ || /Turismo/){c++}}; c==1{exit}' | grep '\[' | sed '$d' | tr '[' '\n' | cut -d ] -f2 | sed "s|(.*$||g" | sed "s|[0-9]*||g" | sed "s|[0-9].*$||g" | sed "s|^ .*$||g" | awk 'NF' | sed "/[)-]/d" |  sed "s|,.*$||g" | sed "s| $||g" | sed "s| .$||g" | sed "/^ .*/d" | sed "s|&*&||g" | grep -v Bandera | grep -v Escudo | grep -v Comú | grep -v Área | grep -v Municipio | grep -v Localitz > "${tmpmunicipios}"
-				if [ ! -s  $tmpmunicipios ]; then lynx --dump --display_charset=utf-8 "https://es.wikipedia.org/wiki/${wikicomarca}" |  grep -v Municipios | awk '/Habitantes/{t=1}; t==1{print; if (/Véa/ || /Ref/ || /Hist/ || /Cons/ || /Lug/ || /Demo/){c++}}; c==1{exit}' | grep '\[' | sed '$d' | tr '[' '\n' | cut -d ] -f2 | sed "s|(.*$||g" | sed "s|[0-9]*||g" | awk 'NF' | sed "s|,.*$||g" | sed "s| $||g" | sed "s|&*&||g" | sed "s| .$||g" | grep -v Bandera | grep -v Escudo | grep -v Comú | grep -v Área | grep -v Municipio | grep -v PSC | grep -v ERC | grep -v CUP > "${tmpmunicipios}"; fi;
-				if [ ! -s  $tmpmunicipios ]; then lynx --dump --display_charset=utf-8 "https://es.wikipedia.org/wiki/${wikicomarca}" |  grep -v Municipios | awk '/Ciudad/{t=1}; t==1{print; if (/Véa/ || /Ref/ || /Hist/ || /Cons/ || /Lug/ || /Demo/){c++}}; c==1{exit}' | grep '\[' | sed '$d' | tr '[' '\n' | cut -d ] -f2 | sed "s|(.*$||g" | sed "s|[0-9]*||g" | awk 'NF' | sed "s|,.*$||g" | sed "s| $||g" | sed "s|&*&||g"  | sed "s| .$||g" | grep -v Bandera | grep -v Escudo | grep -v Comú | grep -v Área | grep -v Municipio | grep -v Junts  | grep -v Agrup | grep \- | sed "s| -*$||g" | grep -v PSC | grep -v ERC | grep -v CUP > "${tmpmunicipios}"; fi;
-				if [ ! -s  $tmpmunicipios ]; then lynx --dump --display_charset=utf-8 "https://es.wikipedia.org/wiki/${wikicomarca}" |  grep -v Municipios | awk '/Ciudad/{t=1}; t==1{print; if (/TOT/){c++}}; c==1{exit}' | grep '\[' | sed '$d' | tr '[' '\n' | cut -d ] -f2 | sed "s|[0-9].*$||g" | sed "s|^ .*$||g" | awk 'NF' | sed "/[)-]/d" | grep -v PSC | grep -v ERC | grep -v CUP > "${tmpmunicipios}"; fi;
-				if [ $(wc -l "${tmpmunicipios}" | awk '{print $1}') -eq 1 ]; then lynx --dump --display_charset=utf-8 "https://es.wikipedia.org/wiki/${wikicomarca}" |  grep -v Municipios | awk '/Ciudad/{t=1}; t==1{print; if (/Organización/){c++}}; c==1{exit}' | grep '\[' | sed '$d' | tr '[' '\n' | cut -d ] -f2 | sed "s|(.*$||g" | sed "s|[0-9]*||g" | sed "s|,.*$||g" | sed "s| $||g" | sed "s|&*&||g"  | sed "s| .$||g" | sed "s|^ .*$||g" | sed "/)/d" | awk 'NF'  | grep -v Bandera | grep -v Escudo | grep -v Comú | grep -v Área | grep -v Municipio | grep -v Localitz | grep -v [gG]rup | grep -v Junts  | grep -v JxC | grep -v Xavier  | grep -v Marta | grep -v Tot\ per | grep -v Decidim | grep -v Ignasi | grep -v Podem  | grep -v Alternativa | grep -v Assemblea | grep -v PSC | grep -v ERC | grep -v CUP > "${tmpmunicipios}"; fi;
+				lynx --dump --display_charset=utf-8 "https://es.wikipedia.org/wiki/${wikicomarca}" |  grep -v Municipios | awk '/Municipio/{t=1}; t==1{print; if (/Véa/ || /Ref/ || /Hist/ || /Cons/ || /Lug/ || /Demo/ || /TOT/ || /Eco/ || /Veg/ || /Comu/ || /Enla/ || /Geogra/ || /Tercios/ || /Turismo/){c++}}; c==1{exit}' | sed ':a;N;$!ba;s/\n/ /g' | tr '[' '\n' | cut -d ] -f2 | sed "s|(.*$||g" | sed "s|[0-9]*||g" | sed "s|[0-9].*$||g" | sed "s|^ .*$||g" | awk 'NF' | sed "/[)-]/d" |  sed "s|,.*$||g" | sed "s| $||g" | sed "s| .$||g" | sed "/^ .*/d" | sed "s|&*&||g"  | sed 's/  */ /g' | sed '$d' | sed 's/Consejo.*$//g' | lynxsanitizer > "${tmpmunicipios}"
+				if [ ! -s  $tmpmunicipios ]; then lynx --dump --display_charset=utf-8 "https://es.wikipedia.org/wiki/${wikicomarca}" |  grep -v Municipios | awk '/Habitantes/{t=1}; t==1{print; if (/Véa/ || /Ref/ || /Hist/ || /Cons/ || /Lug/ || /Demo/){c++}}; c==1{exit}' | sed ':a;N;$!ba;s/\n/ /g' | tr '[' '\n' | cut -d ] -f2 | sed "s|(.*$||g" | sed "s|[0-9]*||g" | awk 'NF' | sed "s|,.*$||g" | sed "s| $||g" | sed "s|&*&||g" | sed "s| .$||g"  | sed 's/  */ /g' | sed '$d' | sed 's/Consejo.*$//g' | lynxsanitizer  > "${tmpmunicipios}"; fi;
+				if [ ! -s  $tmpmunicipios ]; then lynx --dump --display_charset=utf-8 "https://es.wikipedia.org/wiki/${wikicomarca}" |  grep -v Municipios | awk '/Ciudad/{t=1}; t==1{print; if (/Véa/ || /Ref/ || /Hist/ || /Cons/ || /Lug/ || /Demo/){c++}}; c==1{exit}' | sed ':a;N;$!ba;s/\n/ /g' | tr '[' '\n' | cut -d ] -f2 | sed "s|(.*$||g" | sed "s|[0-9]*||g" | awk 'NF' | sed "s|,.*$||g" | sed "s| $||g" | sed "s|&*&||g"  | sed "s| .$||g" | sed 's/  */ /g' | sed '$d' | sed 's/Consejo.*$//g' | lynxsanitizer  > "${tmpmunicipios}"; fi;
+				if [ ! -s  $tmpmunicipios ]; then lynx --dump --display_charset=utf-8 "https://es.wikipedia.org/wiki/${wikicomarca}" |  grep -v Municipios | awk '/Ciudad/{t=1}; t==1{print; if (/TOT/){c++}}; c==1{exit}' | sed ':a;N;$!ba;s/\n/ /g' | tr '[' '\n' | cut -d ] -f2 | sed "s|[0-9].*$||g" | sed "s|^ .*$||g" | awk 'NF' | sed "/[)-]/d"  | sed '$d' | sed 's/Consejo.*$//g' | lynxsanitizer  > "${tmpmunicipios}"; fi;
+				if [ $(wc -l "${tmpmunicipios}" | awk '{print $1}') -eq 1 ]; then lynx --dump --display_charset=utf-8 "https://es.wikipedia.org/wiki/${wikicomarca}" |  grep -v Municipios | awk '/Ciudad/{t=1}; t==1{print; if (/Organización/){c++}}; c==1{exit}' | sed ':a;N;$!ba;s/\n/ /g' | tr '[' '\n' | sed '$d' | tr '[' '\n' | cut -d ] -f2 | sed "s|(.*$||g" | sed "s|[0-9]*||g" | sed "s|,.*$||g" | sed "s| $||g" | sed "s|&*&||g"  | sed "s| .$||g" | sed "s|^ .*$||g" | sed "/)/d" | awk 'NF'  | sed 's/  */ /g' | sed '$d' | sed 's/Consejo.*$//g' | lynxsanitizer > "${tmpmunicipios}"; fi;
 				municipio=""
 				cat $tmpmunicipios
 				while read -r muniline
@@ -322,14 +346,15 @@ for prov in $(find "${basepath}/Provincias/" -type d); do
 						if [ $(echo ${municipiolimpio} | wc -c) -gt 2 ] ; then
 							if [[  ! -e "${baseprog}/Municipios/Wikipedia/${municipiolimpio}.html" ]] || [[ ! -s "${baseprog}/Municipios/Wikipedia/${municipiolimpio}.html" ]]; then
 								if [ $(curl -s --head "https://es.wikipedia.org/wiki/${municipiolimpio}" | head -n 1 | awk '{print $2}') -ne 404 ] && \
-										[ $(curl -s "https://es.wikipedia.org/wiki/${municipiolimpio}" | grep -c "desambiguac") -eq 0 ]; then
+										[ $(curl -s "https://es.wikipedia.org/wiki/${municipiolimpio}" | grep -c "desambiguac") -eq 0 ] && \
+										[ $(curl -s "https://es.wikipedia.org/wiki/${municipiolimpio}" | grep -c "tulos\ similares") -eq 0 ]; then
 											wget -O "${baseprog}/Municipios/Wikipedia/${municipiolimpio}.html" "https://es.wikipedia.org/wiki/${municipiolimpio}"
 								else
-									echo "Utilizando un proxy para buscar un resultado"
-									wikiurl=$(urisearch "${muniline}" "municipio" "`urlencode ${wikicomarca}`" "${provi}" "Catalunya" "d" "1")
-									echo "encontrado ${wikiurl}"
-									municipiolimpio=$(urldecode "$(echo $wikiurl | cut -d / -f5)")
-									wget -O "${baseprog}/Municipios/Wikipedia/${municipiolimpio}.html" "${wikiurl}"
+									while true; do
+										wikiurl=$(urisearch "${muniline}" "municipio" "`urlencode ${wikicomarca}`" "${provi}" "Catalunya" "0")
+										municipiolimpio=$(urldecode "$(echo $wikiurl | cut -d / -f5)")
+										[[  ! -e "${baseprog}/Municipios/Wikipedia/${municipiolimpio}.html" ]] && wget -O "${baseprog}/Municipios/Wikipedia/${municipiolimpio}.html" "${wikiurl}" ; break
+									done
 								fi
 							fi
 						fi
